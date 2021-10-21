@@ -1,0 +1,407 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style>
+      .miProgreso {
+        width: 100%;
+        background-color: rgb(170, 170, 170);
+        margin: 0.5em auto;
+      }
+
+      .miBarra {
+        color: #c1c1c1;
+      }
+    </style>
+    <!--Jquery-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Datatables -->
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.datatables.net/v/dt/dt-1.11.3/datatables.min.css"
+    />
+    <script
+      type="text/javascript"
+      src="https://cdn.datatables.net/v/dt/dt-1.11.3/datatables.min.js"
+    ></script>
+    <!-- Datatables -->
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulacion CPU</title>
+    <!-- Bootstrap 5-->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+
+  <body>
+    <div>
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+          <a class="navbar-brand">Simulador de procesos con colas</a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarColapsable">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item dropdown">
+                <a
+                  class="nav-link dropdown-toggle"
+                  href="#"
+                  id="navbarDropdown"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Elige un algoritmo
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <li>
+                    <button
+                      onclick="elegir('FIFO')"
+                      id="boton1"
+                      class="dropdown-item"
+                    >
+                      FIFO
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onclick="elegir('Más corto primero')"
+                      id="boton1"
+                      class="dropdown-item"
+                    >
+                      Más corto primero
+                    </button>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </div>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+          <div id="grafico" class="grafico">
+            <!-- 2 dropdowns, 1 de archivo y otro de opciones -->
+            <!-- Dentro de opciones tenemos: ALGORITMOS: [Fifo,  menos timpo restante, round robin, PSJF] -->
+            <!-- Le pones velocidad 👍 en fotogramas -->
+            <!-- en archivo tenemos nuevos procesos, configuración de procesos, cargar archivo con procesos? 🤨 Guardar estadisticas 👍 -->
+            <!-- En el gráfico tenemos varias barritas que cambian de valor de acuerdo a si se están acabando XD, tambiién tenemos el número de proceso, pero no dice la "cantidad" de este proceso.
+Además, tenemos lo de CPU donde tenemos un contador, el tiempo Idle(sin hacer nada) y el tiempo ocupado-->
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <!-- En realidad no es necesario nada de esto, salvo lo del cpu y el tiempo de espera-->
+        <div class="col-md-4">
+          <div id="cpu"></div>
+          <label id="minutes">00</label>:<label id="seconds">00</label>
+          <!-- varios datos que no nos interesan, media, maxima y desviación estandar. -->
+        </div>
+        <div class="col-md-4">
+          <div id="t_response"></div>
+          <!-- varios datos que no nos interesan, media, maxima y desviación estandar. -->
+        </div>
+        <div class="col-md-4">
+          <div id="t_turnaround">
+            <!-- varios datos que no nos interesan, media, maxima y desviación estandar. -->
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div id="t_espera">
+            <!-- varios datos que no nos interesan, media, maxima y desviación estandar. -->
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-8">
+          <table id="table_id" class="display" style="width: 100%">
+            <thead>
+              <tr>
+                <th>PID</th>
+                <th>Tiempo de proceso (segundos)</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+        <div class="col-md-4">
+          <label for="procesos"
+            >Ingrese el numero de procesos o aprete 'Generar' para procesos
+            aleatorios</label
+          >
+          <button class="btn btn-success" onclick="generar_boton()">
+            Generar
+          </button>
+          <button class="btn btn-success" onclick="procesar()">Procesar</button>
+          <button class="btn btn-danger" onclick="eliminar_todo_boton()">
+            Eliminar Todo
+          </button>
+          <br>
+          <br>
+          <label>Agrega tus propios procesos!</label>
+          <div class="input-group">
+            <span class="input-group-text" id="tiempo_pid">Tiempo(s)</span>
+            <input
+              id="estetiempo"
+              type="text"
+              class="form-control"
+              placeholder="Ingresa el tiempo de tu nuevo proceso"
+              aria-label="tiempo"
+              aria-describedby="tiempo_pid"
+            />
+            <button
+              onclick="add_process_input()"
+              class="btn btn-primary"
+              type="button"
+              id="add_process"
+            >
+              Añadir
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+<script>
+  const tablas = {};
+  let nuevaLista = [];
+  // Algoritmos
+  let sortShortestFirst = (milista) => {
+    function compare(a, b) {
+      if (a.tiempos < b.tiempos) {
+        return -1;
+      }
+      if (a.tiempos > b.tiempos) {
+        return 1;
+      }
+      return 0;
+    }
+    milista.sort(compare);
+    return milista;
+  };
+  let fifo = (milista) => {
+    function compare(a, b) {
+      if (a.iteraciones < b.iteraciones) {
+        return -1;
+      }
+      if (a.iteraciones > b.iteraciones) {
+        return 1;
+      }
+      return 0;
+    }
+    milista.sort(compare);
+    return milista;
+  };
+  // Elegir algoritmo
+  let algoritmo = "";
+  let redibujar = (lista) => {
+    tablas.tablita.clear();
+    tablas.tablita.clear(); //Debería ser una funcion asincrona, pero como no sé ocmo implementarla le doy a doble clear 👍
+    tablas.tablita.rows.add(lista).draw();
+    console.log("Redibujado :D");
+  };
+  let elegir = (valor) => {
+    $("#grafico").html(""); //Limpia grafico
+
+    continuar = false; //Detengo la función async
+    document.getElementById("navbarDropdown").innerHTML = valor;
+    algoritmo = valor;
+    console.log(valor);
+    if (nuevaLista.length != 0) {
+      if (algoritmo == "FIFO") {
+        let nuevofifo = fifo(nuevaLista);
+        redibujar(nuevofifo);
+        nuevaLista.forEach((element) => {
+          agregar_grafico_proceso(element.iteraciones, element.tiempos);
+        });
+      } else if (algoritmo == "Más corto primero") {
+        let nuevocorto = sortShortestFirst(nuevaLista);
+        redibujar(nuevocorto);
+        nuevaLista.forEach((element) => {
+          agregar_grafico_proceso(element.iteraciones, element.tiempos);
+        });
+      } else {
+        nuevaLista.forEach((element) => {
+          agregar_grafico_proceso(element.iteraciones, element.tiempos);
+        });
+      }
+    } else {
+      alert("Debe generar una lista primero");
+    }
+  };
+  let add_process_input = () => {
+    time = document.getElementById("estetiempo").value;
+    if (time == "") {
+      alert("El input no puede estar vacio.");
+      return;
+    }
+    console.log(time);
+    if (isNaN(time)) {
+      alert("Debes introducir un número como tiempo, en segundos");
+      return;
+    }
+    let nuevo_pid = nuevaLista.length;
+    if (nuevo_pid == undefined) {
+      nuevo_pid = 0;
+    }
+    nuevaLista.push({ iteraciones: nuevo_pid, tiempos: time });
+    redibujar(nuevaLista);
+    $("#grafico").html(""); //Limpia grafico
+    nuevaLista.forEach((element) => {
+      agregar_grafico_proceso(element.iteraciones, element.tiempos);
+    });
+  };
+
+  let eliminar_todo_boton = () => {
+    nuevaLista = []; //clear lista
+    $("#grafico").html(""); //Limpia grafico
+    continuar = false; //Detengo la función async
+    tablas.tablita.clear().draw(); //Clear datatables
+  };
+  let generar_boton = () => {
+    // Debo leer el valor del algoritmo acá
+    $("#grafico").html(""); //Limpia grafico
+    continuar = false; //Detengo la función async
+    nuevaLista = [];
+    let array_iteraciones = [];
+    let array_tiempos = [];
+    for (let i = 0; i < 20; i++) {
+      nuevaLista.push({
+        iteraciones: i,
+        tiempos: Math.round(Math.random() * (10 - 1) + 1),
+      });
+    }
+    redibujar(nuevaLista);
+    let xd = document.getElementById("navbarDropdown").innerHTML;
+    elegir(xd);
+  };
+  // Algoritmo para sort short
+  // Crear la tabla...
+  $(document).ready(function () {
+    tablas.tablita = $("#table_id").DataTable({
+      ordering: false,
+      searching: false,
+      paging: false,
+      info: false,
+      data: nuevaLista,
+      columns: [{ data: "iteraciones" }, { data: "tiempos" }],
+    });
+  });
+</script>
+<script>
+  // Dios hay que animaaaaaaaaar
+  let continuar = true; //Detener la función
+  let procesar = () => {
+    if (nuevaLista.length != 0) {
+      async function cargar(lista) {
+        continuar = true; //Quiero que se ejecute al menos una vez
+        // We need to wrap the loop into an async function for this to work
+        let timer = (ms) => new Promise((res) => setTimeout(res, ms));
+        for (var i = 0; i < lista.length; i++) {
+          if (continuar) {
+            animar_proceso(nuevaLista[i].iteraciones, 0, nuevaLista[i].tiempos);
+            console.log(nuevaLista[i].tiempos * 1000);
+            await timer(nuevaLista[i].tiempos * 1000); // then the created Promise can be awaited
+          }
+        }
+      }
+      cargar(nuevaLista);
+    } else {
+      alert("Debes generar una lista primero.");
+    }
+  };
+</script>
+<script>
+  let agregar_grafico_proceso = (eid, tiempo) => {
+    let proceso = document.createElement("div");
+    tiempo = tiempo * 10;
+    proceso.style.width = tiempo + "%";
+    proceso.id = eid;
+    let miProgreso = document.createElement("div");
+    miProgreso.classList.add("miProgreso");
+    miProgreso.id = `miProgreso_${eid}`;
+    let miBarra = document.createElement("div");
+    miBarra.classList.add("miBarra");
+    miBarra.classList.add("column");
+    miBarra.style.width = "100%";
+
+    miBarra.style.backgroundColor = "#5C985B";
+    miBarra.innerHTML = "100%";
+    miBarra.style.textAlign = "center;";
+    miBarra.id = `miBarra_${eid}`;
+    miProgreso.appendChild(miBarra);
+    proceso.appendChild(miProgreso);
+    document.getElementById("grafico").appendChild(proceso);
+  };
+  // Abajo la animación
+  let animar_proceso = (eid, porcentaje_objetivo, tiempo) => {
+    // El tiempo que sea en segundos
+    tiempo = tiempo * 1000;
+    let elemento = document.getElementById(`miBarra_${eid}`);
+    let valor_actual = elemento.innerHTML.replace("%", "");
+    console.log(valor_actual);
+    let iteraciones = Math.abs(porcentaje_objetivo - valor_actual);
+    tiempo = tiempo / iteraciones;
+    console.log(valor_actual);
+    if (porcentaje_objetivo > 100) {
+      console.log("No se puede más de 100");
+      return;
+    }
+    let mover = setInterval(() => {
+      if (valor_actual > porcentaje_objetivo) {
+        valor_actual--;
+      } else {
+        valor_actual++;
+      }
+      elemento.style.width = valor_actual + "%";
+      elemento.innerHTML = valor_actual + "%";
+      if (valor_actual == porcentaje_objetivo) {
+        clearInterval(mover);
+      }
+      if (valor_actual == 0) {
+        // El proceso termina, por lo tanto lo borramos
+        elemento.parentNode.removeChild(elemento);
+      }
+    }, tiempo);
+  };
+</script>
+<script>
+  var minutesLabel = document.getElementById("minutes");
+  var secondsLabel = document.getElementById("seconds");
+  var totalSeconds = 0;
+  setInterval(setTime, 1000);
+  function setTime() {
+    ++totalSeconds;
+    secondsLabel.innerHTML = pad(totalSeconds % 60);
+    minutesLabel.innerHTML = pad(parseInt(totalSeconds / 60));
+  }
+  function pad(val) {
+    var valString = val + "";
+    if (valString.length < 2) {
+      return "0" + valString;
+    } else {
+      return valString;
+    }
+  }
+</script>
